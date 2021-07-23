@@ -47,7 +47,7 @@ downstream_expert:
       gl_iters: 64
 
   modelrc:
-    ar: False
+    ar: True
     hidden_dim: 512
     lstmp_layers: 2
     lstmp_dropout_rate: 0.2

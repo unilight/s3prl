@@ -111,6 +111,7 @@ class DownstreamExpert(nn.Module):
             input_dim = self.upstream_dim,
             output_dim = self.acoustic_feature_dim,
             resample_ratio = self.resample_ratio,
+            stats = self.stats,
             **self.modelrc
         )
         self.objective = Loss(self.stats)
@@ -164,14 +165,15 @@ class DownstreamExpert(nn.Module):
         input_features = pad_sequence(input_features, batch_first=True).to(device=device)
         
         # forward model
-        predicted_features, predicted_feature_lengths = self.model(input_features, input_feature_lengths)
-
-        # save the unnormalized features for dev and test sets
         if split in ["dev", "test"]:
+            predicted_features, predicted_feature_lengths = self.model(input_features, input_feature_lengths)
+            # save the unnormalized features for dev and test sets
             records["predicted_features"] += predicted_features.cpu().numpy().tolist()
             records["feature_lengths"] += predicted_feature_lengths.cpu().numpy().tolist()
             records["wav_paths"] += wav_paths
             records["wavs"] += wavs
+        else:
+            predicted_features, predicted_feature_lengths = self.model(input_features, input_feature_lengths, acoustic_features_padded.to(device))
 
         # loss calculation (masking and normalization are done inside)
         loss = self.objective(predicted_features,
