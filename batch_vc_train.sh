@@ -1,19 +1,30 @@
 #!/bin/bash
 
 upstream=$1
+config=$2
+tag=$3
+part=$4
 
 set -e
+
+if [ ${part} == "first" ]; then
+    trgspks=("TEF1" "TEF2")
+elif [ ${part} == "last" ]; then
+    trgspks=("TEM1" "TEM2")
+elif [ ${part} == "all" ]; then
+    trgspks=("TEF1" "TEF2" "TEM1" "TEM2")
+fi
 
 date +%T
 
 pids=() # initialize pids
-for trgspk in TEF1 TEF2 TEM1 TEM2; do
+for trgspk in "${trgspks[@]}"; do
 (
-    expname=a2o_vc_vcc2020_ar_${trgspk}_${upstream}
+    expname=a2o_vc_vcc2020_${tag}_${trgspk}_${upstream}
     expdir=result/downstream/${expname}
     mkdir -p ${expdir}
     python run_downstream.py -m train \
-        --config downstream/a2o-vc-vcc2020/config_ar.yaml \
+        --config ${config} \
         -n ${expname} \
         -u ${upstream} \
         -d a2o-vc-vcc2020 \
