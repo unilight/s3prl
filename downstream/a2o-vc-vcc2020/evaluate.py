@@ -178,50 +178,66 @@ def main():
     
     ##############################
 
-    print("Calculating MCD and f0-related scores...")
-    # Get and divide list
-    file_lists = np.array_split(converted_files, args.n_jobs)
-    file_lists = [f_list.tolist() for f_list in file_lists]
+    if task == "task1":
+        print("Calculating MCD and f0-related scores...")
+        # Get and divide list
+        file_lists = np.array_split(converted_files, args.n_jobs)
+        file_lists = [f_list.tolist() for f_list in file_lists]
 
-    # multi processing
-    with mp.Manager() as manager:
-        results = manager.list()
-        processes = []
-        for f in file_lists:
-            p = mp.Process(
-                target=_calculate_mcd_f0,
-                args=(f, gt_root, trgspk, f0min, f0max, results),
-            )
-            p.start()
-            processes.append(p)
+        # multi processing
+        with mp.Manager() as manager:
+            results = manager.list()
+            processes = []
+            for f in file_lists:
+                p = mp.Process(
+                    target=_calculate_mcd_f0,
+                    args=(f, gt_root, trgspk, f0min, f0max, results),
+                )
+                p.start()
+                processes.append(p)
 
-        # wait for all process
-        for p in processes:
-            p.join()
+            # wait for all process
+            for p in processes:
+                p.join()
 
-        results = sorted(results, key=lambda x:x[0])
-        results = [result + ers[result[0]] + [accept_results[result[0]]] for result in results] 
+            results = sorted(results, key=lambda x:x[0])
+            results = [result + ers[result[0]] + [accept_results[result[0]]] for result in results] 
+    else:
+        results = []
+        for f in converted_files:
+            basename = get_basename(f)
+            results.append([basename] + ers[basename] + [accept_results[basename]])
+        
+    # write to log
+    log_path = args.log_path if args.log_path else os.path.join(args.wavdir, "obj.log")
+    with open(log_path, "w") as f:
+        
+        # average result
+        if task == "task1":
+            mMCD = np.mean(np.array([result[1] for result in results]))
+            mf0RMSE = np.mean(np.array([result[2] for result in results]))
+            mf0CORR = np.mean(np.array([result[3] for result in results]))
+            mDDUR = np.mean(np.array([result[4] for result in results]))
+        mCER = cer 
+        mWER = wer
+        mACCEPT = accept_rate
 
-        # write to log
-        log_path = args.log_path if args.log_path else os.path.join(args.wavdir, "obj.log")
-        with open(log_path, "w") as f:
-
-            # utterance wise result
-            for result in results:
+        # utterance wise result
+        for result in results:
+            if task == "task1":
                 f.write(
                     "{} {:.2f} {:.2f} {:.2f} {:.2f} {:.1f} {:.1f} {} \t{} | {}\n".format(
                         *result
                     )
                 )
+            elif task == "task2":
+                f.write(
+                    "{} {:.1f} {:.1f} {} \t{} | {}\n".format(
+                        *result
+                    )
+                )
 
-            # average result
-            mMCD = np.mean(np.array([result[1] for result in results]))
-            mf0RMSE = np.mean(np.array([result[2] for result in results]))
-            mf0CORR = np.mean(np.array([result[3] for result in results]))
-            mDDUR = np.mean(np.array([result[4] for result in results]))
-            mCER = cer 
-            mWER = wer
-            mACCEPT = accept_rate
+        if task == "task1":
             print(
                 "Mean MCD, f0RMSE, f0CORR, DDUR, CER, WER, accept rate: {:.2f} {:.2f} {:.3f} {:.3f} {:.1f} {:.1f} {:.2f}".format(
                     mMCD, mf0RMSE, mf0CORR, mDDUR, mCER, mWER, mACCEPT
@@ -230,6 +246,17 @@ def main():
             f.write(
                 "Mean MCD, f0RMSE, f0CORR, DDUR, CER, WER, accept rate: {:.2f} {:.2f} {:.3f} {:.3f} {:.1f} {:.1f} {:.2f}".format(
                     mMCD, mf0RMSE, mf0CORR, mDDUR, mCER, mWER, mACCEPT
+                )
+            )
+        elif task == "task2":
+            print(
+                "Mean CER, WER, accept rate: {:.1f} {:.1f} {:.2f}".format(
+                    mCER, mWER, mACCEPT
+                )
+            )
+            f.write(
+                "Mean CER, WER, accept rate: {:.1f} {:.1f} {:.2f}".format(
+                     mCER, mWER, mACCEPT
                 )
             )
 

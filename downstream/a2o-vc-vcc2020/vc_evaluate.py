@@ -19,6 +19,7 @@ from scipy.signal import lfilter
 
 SRCSPKS = ["SEF1", "SEF2", "SEM1", "SEM2"]
 TRGSPKS_TASK1 = ["TEF1", "TEF2", "TEM1", "TEM2"]
+TRGSPKS_TASK2 = ["TFF1", "TFM1", "TGF1", "TGM1", "TMF1", "TMM1"]
 
 ################################################################################
 
@@ -330,6 +331,8 @@ def calculate_threshold(data_root, task, device, query="E3*.wav"):
 
     if task == "task1":
         spks = SRCSPKS + TRGSPKS_TASK1
+    if task == "task2":
+        spks = SRCSPKS + TRGSPKS_TASK2
     else:
         raise NotImplementedError
     

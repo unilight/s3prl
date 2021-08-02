@@ -56,4 +56,3 @@ downstream_expert:
     lstmp_dropout_rate: 0.2
     lstmp_proj_dim: 256
     lstmp_layernorm: False
-    dropout_rate: 0.2

@@ -13,6 +13,12 @@ elif [ ${part} == "last" ]; then
     trgspks=("TEM1" "TEM2")
 elif [ ${part} == "all" ]; then
     trgspks=("TEF1" "TEF2" "TEM1" "TEM2")
+elif [ ${part} == "fin" ]; then
+    trgspks=("TFF1" "TFM1")
+elif [ ${part} == "ger" ]; then
+    trgspks=("TGF1" "TGM1")
+elif [ ${part} == "man" ]; then
+    trgspks=("TMF1" "TMM1")
 fi
 
 date +%T

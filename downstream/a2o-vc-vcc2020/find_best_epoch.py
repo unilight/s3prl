@@ -21,6 +21,8 @@ def get_parser():
     )
     parser.add_argument("--verbose", "-V", default=1, type=int, help="Verbose option")
     parser.add_argument("--upstream", type=str, required=True, help="upstream")
+    parser.add_argument("--task", type=str, required=True, help="task")
+    parser.add_argument("--tag", type=str, required=True, help="tag")
     parser.add_argument("--expdir", type=str, default="../../result/downstream", help="expdir")
     parser.add_argument("--start_epoch", default=4000, type=int)
     parser.add_argument("--end_epoch", default=10000, type=int)
@@ -60,14 +62,18 @@ if __name__ == "__main__":
     epochs = list(range(args.start_epoch, args.end_epoch+args.step_epoch, args.step_epoch))
 
     bests = []
-    for trgspk in task1_trgspks:
+    trgspks = task1_trgspks if args.task == "task1" else task2_trgspks
+    for trgspk in trgspks:
 
         #"""
         #choose by MCD
         scores = []
         for ep in epochs:
-            log_file = os.path.join(args.expdir, f"a2o_vc_vcc2020_ar_{trgspk}_{args.upstream}", str(ep), "pwg_wav", "obj.log")
-            result = grep(log_file, "Mean")[0].split("Mean MCD, f0RMSE, f0CORR, DDUR, CER, WER, accept rate: ")[1].split(" ")
+            log_file = os.path.join(args.expdir, f"a2o_vc_vcc2020_{args.tag}_{trgspk}_{args.upstream}", str(ep), "pwg_wav", "obj.log")
+            if args.task == "task1":
+                result = grep(log_file, "Mean")[0].split("Mean MCD, f0RMSE, f0CORR, DDUR, CER, WER, accept rate: ")[1].split(" ")
+            elif args.task == "task2":
+                result = grep(log_file, "Mean")[0].split("Mean CER, WER, accept rate: ")[1].split(" ")
             scores.append(result)
         best = min(scores, key=lambda x: float(x[0]))
         bests.append(best)
@@ -79,5 +85,8 @@ if __name__ == "__main__":
         #bests.append(result)
 
 
-    avg = [f"{(sum([float(best[i]) for best in bests]) / 4.0):.2f}" for i in range(7)]
+    if args.task == "task1":
+        avg = [f"{(sum([float(best[i]) for best in bests]) / 4.0):.2f}" for i in range(7)]
+    elif args.task == "task2":
+        avg = [f"{(sum([float(best[i]) for best in bests]) / 6.0):.2f}" for i in range(3)]
     print(" ".join(avg))
